@@ -8,8 +8,13 @@
   --text: #16161a;
   --muted: #6e6e73;
   --slate: #5b6b7a;
-  --accent: #e5372b; /* ★ red */
-  --accent-hover: #cf2d22;
+  --accent: #0eb5a4; /* mint (light) */
+  --accent-hover: #0c9e8f;
+  --accent-soft: rgba(14, 181, 164, 0.1);
+  --on-accent: #04302b;
+  --user-bubble: #2c2c2e;
+  --user-text: #ffffff;
+  --error: #e5372b;
   --border: #e6e6e8;
   --glass: rgba(255, 255, 255, 0.72);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
@@ -28,8 +33,13 @@
     --text: #f5f5f7;
     --muted: #98989d;
     --slate: #a9b4bf;
-    --accent: #ff5c4d;
-    --accent-hover: #ff6f61;
+    --accent: #c8fcf3; /* mint (dark, pastel) */
+    --accent-hover: #d8fff8;
+    --accent-soft: rgba(200, 252, 243, 0.14);
+    --on-accent: #062a24;
+    --user-bubble: #38383a;
+    --user-text: #f5f5f7;
+    --error: #ff6b60;
     --border: #2c2c2e;
     --glass: rgba(0, 0, 0, 0.6);
     --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
@@ -69,6 +79,16 @@ body {
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* 텍스트 선택색 — 테마 무관 고정 */
+::selection {
+  background: #c8fcf3;
+  color: #062a24;
+}
+::-moz-selection {
+  background: #c8fcf3;
+  color: #062a24;
 }
 
 .app {
@@ -188,16 +208,21 @@ body {
   transition: color 0.15s, padding-left 0.15s;
 }
 .chip::before {
-  content: "▶";
-  color: var(--accent);
-  font-size: 9px;
+  content: "›";
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1;
   position: relative;
-  top: -2px;
+  top: 1px;
   flex-shrink: 0;
+  transition: color 0.15s;
 }
 .chip:hover {
   color: var(--accent);
   padding-left: 12px;
+}
+.chip:hover::before {
+  color: var(--accent);
 }
 
 /* Messages */
@@ -235,8 +260,8 @@ body {
   display: none;
 }
 .msg.user .bubble {
-  background: var(--accent);
-  color: #fff;
+  background: var(--user-bubble);
+  color: var(--user-text);
   border-bottom-right-radius: 6px;
   max-width: 82%;
 }
@@ -244,6 +269,9 @@ body {
   background: var(--surface);
   color: var(--text);
   border-bottom-left-radius: 6px;
+}
+.bubble.error {
+  color: var(--error);
 }
 
 /* Sources — [p.19] 대괄호 참조 */
@@ -259,12 +287,64 @@ body {
   color: var(--slate);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  padding: 2px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
 }
 .source-tag::before {
   content: "[";
 }
 .source-tag::after {
   content: "]";
+}
+.source-tag:hover {
+  color: var(--accent);
+}
+.source-tag.open {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 출처 원문 발췌 패널 */
+.ref-panel {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  animation: refIn 0.18s ease;
+}
+@keyframes refIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ref-head {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.ref-page {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ref-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* typing dots */
@@ -333,7 +413,7 @@ body {
 .send {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 50%;
   width: 38px;
   height: 38px;

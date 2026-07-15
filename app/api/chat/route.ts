@@ -61,8 +61,15 @@ export async function POST(req: Request) {
   const hits = retrieve(lastUser.content, TOP_K);
   const context = hits.map((h) => `[p.${h.page}] ${h.text}`).join("\n\n");
 
-  // 출처(중복 페이지 제거)
-  const sources = [...new Set(hits.map((h) => h.page))].sort((a, b) => a - b);
+  // 출처(중복 페이지 제거) — 근거 문단 텍스트도 함께 전달
+  const seenPages = new Set<number>();
+  const sources: { page: number; text: string }[] = [];
+  for (const h of hits) {
+    if (seenPages.has(h.page)) continue;
+    seenPages.add(h.page);
+    sources.push({ page: h.page, text: h.text.slice(0, 700) });
+  }
+  sources.sort((a, b) => a.page - b.page);
 
   // 2) Claude 스트리밍 호출
   const client = new Anthropic();
@@ -70,6 +77,8 @@ export async function POST(req: Request) {
 
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // 스트림 첫 줄로 출처 메타데이터(JSON) 전송, 이후 답변 텍스트
+      controller.enqueue(encoder.encode(JSON.stringify({ sources }) + "\n"));
       try {
         const stream = client.messages.stream({
           model: MODEL,
@@ -99,7 +108,6 @@ export async function POST(req: Request) {
     headers: {
       "content-type": "text/plain; charset=utf-8",
       "cache-control": "no-store",
-      "x-sources": encodeURIComponent(JSON.stringify(sources)),
     },
   });
 }

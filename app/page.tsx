@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+interface Source {
+  page: number;
+  text: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
-  sources?: number[];
+  sources?: Source[];
 }
 
 const SUGGESTIONS = [
@@ -20,6 +25,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [openRef, setOpenRef] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
@@ -85,27 +91,36 @@ export default function Home() {
         throw new Error(errText || `요청 실패 (${res.status})`);
       }
 
-      let sources: number[] = [];
-      try {
-        sources = JSON.parse(
-          decodeURIComponent(res.headers.get("x-sources") || "[]")
-        );
-      } catch {
-        sources = [];
-      }
-
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let acc = "";
+      let buf = "";
+      let answer = "";
+      let headerDone = false;
+      let sources: Source[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        acc += decoder.decode(value, { stream: true });
+        const text = decoder.decode(value, { stream: true });
+        if (!headerDone) {
+          // 첫 줄(JSON) = 출처 메타데이터, 이후 = 답변 텍스트
+          buf += text;
+          const nl = buf.indexOf("\n");
+          if (nl < 0) continue;
+          try {
+            sources = JSON.parse(buf.slice(0, nl)).sources || [];
+          } catch {
+            sources = [];
+          }
+          answer = buf.slice(nl + 1);
+          headerDone = true;
+        } else {
+          answer += text;
+        }
         setMessages((prev) => {
           const copy = [...prev];
           copy[copy.length - 1] = {
             role: "assistant",
-            content: acc,
+            content: answer,
             sources,
           };
           return copy;
@@ -169,7 +184,11 @@ export default function Home() {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             <span className="role">{m.role === "user" ? "질문" : "답변"}</span>
-            <div className="bubble">
+            <div
+              className={`bubble${
+                m.content.startsWith("[오류]") ? " error" : ""
+              }`}
+            >
               {m.content ? (
                 m.content
               ) : (
@@ -181,13 +200,37 @@ export default function Home() {
               )}
             </div>
             {m.role === "assistant" && m.sources && m.sources.length > 0 && (
-              <div className="sources">
-                {m.sources.map((p) => (
-                  <span key={p} className="source-tag">
-                    p.{p}
-                  </span>
-                ))}
-              </div>
+              <>
+                <div className="sources">
+                  {m.sources.map((s) => {
+                    const key = `${i}:${s.page}`;
+                    const open = openRef === key;
+                    return (
+                      <button
+                        key={s.page}
+                        className={`source-tag${open ? " open" : ""}`}
+                        onClick={() => setOpenRef(open ? null : key)}
+                      >
+                        p.{s.page}
+                      </button>
+                    );
+                  })}
+                </div>
+                {(() => {
+                  if (!openRef || !openRef.startsWith(`${i}:`)) return null;
+                  const page = Number(openRef.split(":")[1]);
+                  const src = m.sources?.find((s) => s.page === page);
+                  if (!src) return null;
+                  return (
+                    <div className="ref-panel">
+                      <div className="ref-head">
+                        <span className="ref-page">p.{src.page}</span> 원문 발췌
+                      </div>
+                      <p className="ref-text">{src.text}…</p>
+                    </div>
+                  );
+                })()}
+              </>
             )}
           </div>
         ))}
