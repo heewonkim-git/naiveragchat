@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { retrieve } from "@/lib/retrieval";
+import { generateHypothetical } from "@/lib/hyde";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { messages?: ChatMessage[] };
+  let body: { messages?: ChatMessage[]; mode?: "naive" | "hyde" };
   try {
     body = await req.json();
   } catch {
@@ -57,29 +58,54 @@ export async function POST(req: Request) {
     });
   }
 
-  // 1) 검색
-  const hits = retrieve(lastUser.content, TOP_K);
-  const context = hits.map((h) => `[p.${h.page}] ${h.text}`).join("\n\n");
-
-  // 출처(중복 페이지 제거) — 근거 문단 텍스트도 함께 전달
-  const seenPages = new Set<number>();
-  const sources: { page: number; text: string }[] = [];
-  for (const h of hits) {
-    if (seenPages.has(h.page)) continue;
-    seenPages.add(h.page);
-    sources.push({ page: h.page, text: h.text.slice(0, 700) });
-  }
-  sources.sort((a, b) => a.page - b.page);
-
-  // 2) Claude 스트리밍 호출
+  const mode = body.mode === "hyde" ? "hyde" : "naive";
   const client = new Anthropic();
   const encoder = new TextEncoder();
 
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
-      // 스트림 첫 줄로 출처 메타데이터(JSON) 전송, 이후 답변 텍스트
-      controller.enqueue(encoder.encode(JSON.stringify({ sources }) + "\n"));
       try {
+        // 1) 검색 쿼리 결정
+        //    - naive: 질문을 그대로 검색
+        //    - hyde : 질문으로 '가상 정답 문단'을 생성하고, 그 문단으로 검색 (핵심)
+        let query = lastUser!.content;
+        let hypothetical: string | undefined;
+        if (mode === "hyde") {
+          try {
+            hypothetical = await generateHypothetical(
+              client,
+              MODEL,
+              lastUser!.content
+            );
+            query = hypothetical;
+          } catch {
+            // 가상 문단 생성 실패 시 naive 방식으로 폴백
+            query = lastUser!.content;
+          }
+        }
+
+        // 2) 실제 문서 검색 (가상 문단은 미끼로만 쓰고 버림 — 근거는 진짜 문서)
+        const hits = retrieve(query, TOP_K);
+        const context = hits
+          .map((h) => `[p.${h.page}] ${h.text}`)
+          .join("\n\n");
+
+        // 출처(중복 페이지 제거) — 근거 문단 텍스트도 함께 전달
+        const seenPages = new Set<number>();
+        const sources: { page: number; text: string }[] = [];
+        for (const h of hits) {
+          if (seenPages.has(h.page)) continue;
+          seenPages.add(h.page);
+          sources.push({ page: h.page, text: h.text.slice(0, 700) });
+        }
+        sources.sort((a, b) => a.page - b.page);
+
+        // 스트림 첫 줄 = 메타데이터(JSON): 출처 + 모드 + (참고용) 가상문단
+        controller.enqueue(
+          encoder.encode(JSON.stringify({ sources, mode, hypothetical }) + "\n")
+        );
+
+        // 3) 최종 답변 생성 (진짜 문서 근거로 스트리밍)
         const stream = client.messages.stream({
           model: MODEL,
           max_tokens: 2048,

@@ -55,8 +55,13 @@
   --text: #f5f5f7;
   --muted: #98989d;
   --slate: #a9b4bf;
-  --accent: #ff5c4d;
-  --accent-hover: #ff6f61;
+  --accent: #c8fcf3;
+  --accent-hover: #d8fff8;
+  --accent-soft: rgba(200, 252, 243, 0.14);
+  --on-accent: #062a24;
+  --user-bubble: #223330;
+  --user-text: #d6f7f0;
+  --error: #ff6b60;
   --border: #2c2c2e;
   --glass: rgba(0, 0, 0, 0.6);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
@@ -485,4 +490,110 @@ mark.pdf-hl {
   color: var(--muted);
   font-size: 12px;
   margin: 12px 0 0;
+}
+
+/* 모드 라벨 (Naive / HyDE) */
+.mode-tag {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 비교 랜딩 (/) */
+.compare {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 16px;
+  gap: 14px;
+}
+.compare-head {
+  text-align: center;
+  flex-shrink: 0;
+}
+.compare-title {
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+.compare-title .vs {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.7em;
+  margin: 0 4px;
+}
+.compare-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.compare-sub b {
+  color: var(--text);
+  font-weight: 600;
+}
+.compare-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+}
+.pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.pane-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.pane-name.accent {
+  color: var(--accent);
+}
+.pane-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pane-link {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pane-link:hover {
+  text-decoration: underline;
+}
+.pane-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: var(--bg);
+}
+
+@media (max-width: 760px) {
+  .compare {
+    height: auto;
+    min-height: 100vh;
+  }
+  .compare-grid {
+    flex-direction: column;
+  }
+  .pane-frame {
+    height: 78vh;
+  }
 }
