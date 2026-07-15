@@ -148,14 +148,7 @@ export default function Home() {
 
       <header className="masthead">
         <p className="eyebrow">
-          <span className="star">★</span> Samsung Biologics · 사업보고서
-        </p>
-        <h1 className="title">
-          사업보고서에게 <em>물어보세요</em>
-        </h1>
-        <p className="subtitle">
-          삼성바이오로직스 사업보고서(2026.05.15 정정본) 17~39페이지 발췌 기반 ·
-          Claude
+          <span className="star">★</span> Samsung Biologics &apos;25년 사업보고서
         </p>
       </header>
 
