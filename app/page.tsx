@@ -162,12 +162,16 @@ export default function Home() {
       </button>
 
       <header className="masthead">
-        <p className="eyebrow">
-          <span className="star">★</span> Samsung Biologics &apos;25년 사업보고서
+        <p className="brand">
+          <span className="star">★</span> Samsung Biologics &apos;25년 사업보고서{" "}
+          <span className="brand-accent">RAG Chatbot</span>
         </p>
       </header>
 
-      <div className="thread" ref={threadRef}>
+      <div
+        className={`thread${showEmpty ? " centered" : ""}`}
+        ref={threadRef}
+      >
         {showEmpty && (
           <div className="empty">
             <p>문서 내용에 근거해 답변하고 출처 페이지를 함께 표시합니다.</p>
