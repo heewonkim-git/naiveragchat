@@ -54,8 +54,13 @@ async function main() {
   const outName = `${base}_${start}-${end}p.pdf`;
   fs.writeFileSync(path.join(ROOT, outName), outBytes);
 
+  // 웹 뷰어용 정적 자산 (public/report.pdf)
+  fs.mkdirSync(path.join(ROOT, "public"), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, "public", "report.pdf"), outBytes);
+
   console.log(`완료 ✅  ${start}~${end}페이지 (${indices.length}쪽) 추출`);
   console.log(`  ${outName}`);
+  console.log(`  public/report.pdf (뷰어용)`);
 }
 
 main().catch((err) => {

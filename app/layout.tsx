@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "삼성바이오로직스 사업보고서 챗봇",
-  description: "사업보고서(17~39p) 기반 RAG 챗봇",
+  title: "Samsung Biologics IR Chat",
+  description: "삼성바이오로직스 사업보고서 기반 IR 챗봇",
 };
 
 // 첫 페인트 전에 저장된 테마를 적용해 깜빡임(FOUC) 방지

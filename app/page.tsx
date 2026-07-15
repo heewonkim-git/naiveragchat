@@ -1,6 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import meta from "@/data/meta.json";
+
+// PDF 뷰어는 브라우저 전용 (SSR 비활성)
+const PdfViewer = dynamic(() => import("./PdfViewer"), {
+  ssr: false,
+  loading: () => <div className="pdf-msg">뷰어 로딩…</div>,
+});
+
+// 잘린 PDF의 페이지 = 원본 페이지 - offset (예: 원본 17p → 뷰어 1p)
+const PDF_OFFSET = (meta as { pageRange?: number[] }).pageRange
+  ? (meta as { pageRange: number[] }).pageRange[0] - 1
+  : 0;
 
 interface Source {
   page: number;
@@ -163,8 +176,8 @@ export default function Home() {
 
       <header className="masthead">
         <p className="brand">
-          <span className="star">★</span> Samsung Biologics &apos;25년 사업보고서{" "}
-          <span className="brand-accent">RAG Chatbot</span>
+          <span className="star">★</span> Samsung Biologics{" "}
+          <span className="brand-accent">IR Chat</span>
         </p>
       </header>
 
@@ -187,7 +200,9 @@ export default function Home() {
 
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
-            <span className="role">{m.role === "user" ? "질문" : "답변"}</span>
+            <span className="role">
+              {m.role === "user" ? "질문" : "IR Agent"}
+            </span>
             <div
               className={`bubble${
                 m.content.startsWith("[오류]") ? " error" : ""
@@ -228,9 +243,21 @@ export default function Home() {
                   return (
                     <div className="ref-panel">
                       <div className="ref-head">
-                        <span className="ref-page">p.{src.page}</span> 원문 발췌
+                        <span className="ref-page">p.{src.page}</span> 원문 · 해당
+                        부분 하이라이트
+                        <a
+                          className="ref-open"
+                          href={`/report.pdf#page=${src.page - PDF_OFFSET}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          새 탭 ↗
+                        </a>
                       </div>
-                      <p className="ref-text">{src.text}…</p>
+                      <PdfViewer
+                        page={src.page - PDF_OFFSET}
+                        highlight={src.text}
+                      />
                     </div>
                   );
                 })()}
