@@ -176,9 +176,9 @@ export default function Home() {
 
       <header className="masthead">
         <p className="brand">
-          <span className="star">★</span> Samsung Biologics{" "}
-          <span className="brand-accent">IR Chat</span>
+          Samsung Biologics <span className="brand-accent">IR Chat</span>
         </p>
+        <p className="brand-sub">2025년 사업보고서 기준</p>
       </header>
 
       <div
