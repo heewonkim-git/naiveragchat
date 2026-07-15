@@ -19,6 +19,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,6 +29,24 @@ export default function Home() {
       behavior: "smooth",
     });
   }, [messages]);
+
+  // 초기 테마 상태 판별 (저장값 우선, 없으면 OS 설정)
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const osDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDark(stored ? stored === "dark" : osDark);
+  }, []);
+
+  function toggleTheme() {
+    const next = isDark ? "light" : "dark";
+    setIsDark(!isDark);
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      /* ignore */
+    }
+  }
 
   function autosize() {
     const ta = taRef.current;
@@ -118,8 +137,19 @@ export default function Home() {
 
   return (
     <div className="app">
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label="테마 전환"
+        title="라이트/다크 전환"
+      >
+        {isDark ? "☀" : "☾"}
+      </button>
+
       <header className="masthead">
-        <p className="eyebrow">Samsung Biologics · 사업보고서 RAG</p>
+        <p className="eyebrow">
+          <span className="star">★</span> Samsung Biologics · 사업보고서
+        </p>
         <h1 className="title">
           사업보고서에게 <em>물어보세요</em>
         </h1>
